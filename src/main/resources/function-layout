@@ -1,0 +1,11 @@
+cache {
+ stitcher {
+  content html
+  component dependencies
+  component html {
+   props
+   propvals
+   html from file
+  }
+ }
+}
