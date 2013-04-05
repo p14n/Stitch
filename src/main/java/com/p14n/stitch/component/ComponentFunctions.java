@@ -22,9 +22,11 @@ public class ComponentFunctions {
         if(componentDefinitions!=null) for (String componentDefinition : componentDefinitions) {
             Config inner = ConfigFactory.parseResources(componentDefinition);
             for (String key : inner.root().keySet()) {
-                ConfigObject val = inner.getObject(key);
+                String searchKey = key;
+                if(key.indexOf('.')>-1) searchKey = "\""+ key +"\"";
+                ConfigObject val = inner.getObject(searchKey);
                 Component c = new Component();
-                c.setDescription(val.get("description").toString());
+                c.setDescription(val.get("description").render());
                 components.put(key,c);
             }
         }
