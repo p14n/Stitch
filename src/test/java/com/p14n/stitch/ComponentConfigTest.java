@@ -16,5 +16,7 @@ public class ComponentConfigTest {
     public void shouldFindAndAddComponents() {
         Map<String, Component> comps = ComponentFunctions.getComponentsFromConfig(ConfigFactory.load("applicationtest"));
         assertTrue(comps.containsKey("client.search"));
+        assertTrue(comps.containsKey("client.search2"));
+        assertTrue(comps.containsKey("client.search3"));
     }
 }
