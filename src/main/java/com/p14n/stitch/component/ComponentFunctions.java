@@ -1,8 +1,10 @@
 package com.p14n.stitch.component;
 
+import com.p14n.stitch.StitchException;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import com.typesafe.config.ConfigObject;
+import com.typesafe.config.ConfigValue;
 
 import java.util.HashMap;
 import java.util.List;
@@ -20,22 +22,40 @@ public class ComponentFunctions {
 
         if (componentDefinitionFiles != null) for (String componentDefinition : componentDefinitionFiles) {
             Config inner = ConfigFactory.parseResources(componentDefinition);
-            for (String key : inner.root().keySet()) {
-                String searchKey = key;
-                if (key.indexOf('.') > -1) searchKey = "\"" + key + "\"";
-                ConfigObject val = inner.getObject(searchKey);
-                Component c = new Component();
-                c.setDescription(val.get("description").render());
-                components.put(key, c);
-            }
+            addComponentsFromConfigToMap(cfg,components,inner);
         }
 
-        List<? extends Config> componentDefinitions = cfg.getConfigList("components");
-        if (componentDefinitions != null) for (Config compDef : componentDefinitions) {
-            Component c = new Component();
-            c.setDescription(compDef.getString("description"));
-            components.put(compDef.getString("name"),c);
-        }
+        addComponentsFromConfigToMap(cfg,components,cfg);
         return components;
     }
+    private static void addComponentsFromConfigToMap(Config topLevelConfig,Map<String, Component> components,
+                                                     Config cfg){
+        List<? extends Config> componentDefinitions = cfg.getConfigList("components");
+        if (componentDefinitions != null) for (Config compDef : componentDefinitions) {
+            Component c = componentFromConfig(topLevelConfig,compDef);
+            components.put(c.getName(),c);
+        }
+    }
+
+    private static Component componentFromConfig(Config topLevelConfig,Config cfg){
+        Component c = new Component();
+        c.setDescription(cfg.getString("description"));
+        c.setName(cfg.getString("name"));
+        Config creatorValues = cfg.getConfig("component");
+        String creatorClass = topLevelConfig.getString("defaults.component.class");
+        if(creatorValues.hasPath("class")){
+            creatorClass = creatorValues.getString("class");
+        }
+        try {
+            c.setCreator((Creator) Class.forName(creatorClass).newInstance());
+        } catch (Exception e) {
+            throw new StitchException("Unable to create class "+creatorClass+" for component "+c.getName(),e);
+        }
+        for(Map.Entry<String,ConfigValue> entry:creatorValues.entrySet()){
+            c.getCreator().set(entry.getKey(),entry.getValue());
+        }
+        return c;
+    }
+
+
 }

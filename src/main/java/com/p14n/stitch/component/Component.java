@@ -5,7 +5,10 @@ package com.p14n.stitch.component;
  * Date: 03/04/2013
  */
 public class Component {
-    String name,description;
+    String name;
+    String description;
+
+    Creator creator;
 
     public String getName() {
         return name;
@@ -31,5 +34,4 @@ public class Component {
         this.creator = creator;
     }
 
-    Creator creator;
 }

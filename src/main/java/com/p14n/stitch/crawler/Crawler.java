@@ -1,7 +1,7 @@
 package com.p14n.stitch.crawler;
 
 import com.p14n.stitch.content.Content;
-import com.p14n.stitch.content.ContentWriter;
+import com.p14n.stitch.content.ContentRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -23,15 +23,15 @@ import static com.p14n.stitch.crawler.CrawlerFunctions.*;
  */
 public class Crawler {
     private String startPage, root = null;
-    ContentWriter writer;
+    ContentRepository writer;
 
-    public Crawler(ContentWriter writer, String root, String startPage) {
+    public Crawler(ContentRepository writer, String root, String startPage) {
         this.startPage = startPage;
         this.root = root;
         this.writer = writer;
     }
 
-    public Crawler(ContentWriter writer, String root) {
+    public Crawler(ContentRepository writer, String root) {
         this(writer, root, "index.html");
     }
 
@@ -59,7 +59,7 @@ public class Crawler {
 
             info(log, "Response code " + responseCode + " from " + name);
             if (responseCode != 200) {
-                writer.putContent(new Content(name, responseCode));
+                addOrUpdate(new Content(name, responseCode));
                 info(log, "Saved missing content " + name);
                 return;
             }
@@ -67,30 +67,39 @@ public class Crawler {
             String contentType = conn.getContentType().toLowerCase();
             String encoding = conn.getContentEncoding();
             byte[] bytes = streamToBytes(conn.getInputStream());
-            writer.putContent(new Content(name, contentType, encoding, bytes, responseCode));
+            addOrUpdate(new Content(name, contentType, encoding, bytes, responseCode));
             info(log, "Saved content type " + contentType);
 
             if (contentType.indexOf("text/html") > -1) {
                 info(log, "Parsing " + name + " for links");
-                String page = new String(bytes, (encoding == null)? "UTF-8": encoding);
+                String page = new String(bytes, (encoding == null) ? "UTF-8" : encoding);
                 parseAndFetch(page, "a", "href", url, visited, log);
                 parseAndFetch(page, "img", "src", url, visited, log);
                 parseAndFetch(page, "link", "href", url, visited, log);
             } else if (contentType.indexOf("css") > -1) {
                 info(log, "Parsing " + name + " for images");
-                String page = new String(bytes, (encoding == null)? "UTF-8":encoding);
-                for(String path:getImagesFromCSS(page)){
+                String page = new String(bytes, (encoding == null) ? "UTF-8" : encoding);
+                for (String path : getImagesFromCSS(page)) {
                     fetchFrom(constructContentUrlFor(url, path), visited, log);
                 }
             }
         } catch (FileNotFoundException e) {
-            error(log,"File not saved " + name,e);
+            error(log, "File not saved " + name, e);
         } catch (MalformedURLException e) {
-            error(log,"Invalid url " + url,e);
+            error(log, "Invalid url " + url, e);
         } catch (ProtocolException e) {
-            error(log,"Invalid url " + url,e);
+            error(log, "Invalid url " + url, e);
         } catch (IOException e) {
-            error(log,"Could not read url " + url,e);
+            error(log, "Could not read url " + url, e);
+        }
+    }
+
+    private void addOrUpdate(Content c) {
+        String name = c.getPath();
+        if (writer.getContent(name) == null) {
+            writer.addContent(c);
+        } else {
+            writer.updateContent(c);
         }
     }
 
@@ -102,17 +111,18 @@ public class Crawler {
         }
         syslog.info(text);
     }
-    private void error(Writer log, String text,Throwable e) {
+
+    private void error(Writer log, String text, Throwable e) {
         try {
             log.write(text);
         } catch (IOException e1) {
             syslog.error("Could not write to log", e1);
         }
-        syslog.error(text,e);
+        syslog.error(text, e);
     }
 
-    private void parseAndFetch(String page,String tag,String attr,String parentUrl,Set<String> visited,Writer log) {
-        for(String path:getOtherPaths(page, tag, attr)){
+    private void parseAndFetch(String page, String tag, String attr, String parentUrl, Set<String> visited, Writer log) {
+        for (String path : getOtherPaths(page, tag, attr)) {
             fetchFrom(constructContentUrlFor(parentUrl, path), visited, log);
         }
     }
