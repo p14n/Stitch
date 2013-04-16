@@ -1,8 +1,7 @@
-package com.p14n.stitch.content.com.p14n.stitch.content.com.p14n.stitch.content;
+package com.p14n.stitch.content;
 
 import com.p14n.stitch.StitchException;
-import com.p14n.stitch.content.Content;
-import com.p14n.stitch.content.ContentRepository;
+import com.p14n.stitch.cache.ContentRequestInfo;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -149,9 +148,9 @@ public class FileContentStore implements ContentRepository {
     }
 
     @Override
-    public synchronized Content getContent(String path) {
-        String id = pathIdMap.get(path);
-        return getContentById(id,path);
+    public synchronized Content getContent(ContentRequestInfo info) {
+        String id = pathIdMap.get(info.getPath());
+        return getContentById(id,info.getPath());
     }
     public synchronized Content getContentById(String id,String path) {
         if (id != null) {

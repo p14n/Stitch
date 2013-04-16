@@ -10,6 +10,12 @@ public class Component {
 
     Creator creator;
 
+    public void setRenderOnClientOnly(boolean renderOnClientOnly) {
+        this.renderOnClientOnly = renderOnClientOnly;
+    }
+
+    private boolean renderOnClientOnly;
+
     public String getName() {
         return name;
     }
@@ -34,4 +40,7 @@ public class Component {
         this.creator = creator;
     }
 
+    public boolean isRenderOnClientOnly() {
+        return renderOnClientOnly;
+    }
 }

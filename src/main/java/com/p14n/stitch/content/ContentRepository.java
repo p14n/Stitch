@@ -1,5 +1,7 @@
 package com.p14n.stitch.content;
 
+import com.p14n.stitch.cache.ContentRequestInfo;
+
 import java.util.List;
 import java.util.Map;
 
@@ -13,7 +15,7 @@ public interface ContentRepository {
     public void updateContent(Content content);
     public void deleteContent(Content content);
     public List<Content> getContent();
-    public Content getContent(String path);
+    public Content getContent(ContentRequestInfo info);
 
     public void initialize(Map<String, String> settings);
 }

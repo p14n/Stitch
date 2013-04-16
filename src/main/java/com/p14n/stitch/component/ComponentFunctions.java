@@ -1,6 +1,7 @@
 package com.p14n.stitch.component;
 
 import com.p14n.stitch.StitchException;
+import com.p14n.stitch.settings.SettingsRepository;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import com.typesafe.config.ConfigObject;
@@ -57,5 +58,8 @@ public class ComponentFunctions {
         return c;
     }
 
+    public static String stitch(String content,Map<String,Component> componentMap,SettingsRepository settings ){
+        return null;
+    }
 
 }
