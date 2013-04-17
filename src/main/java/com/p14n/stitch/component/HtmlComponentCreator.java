@@ -23,6 +23,14 @@ public class HtmlComponentCreator extends Creator {
     }
 
     @Override
+    public String[] cssDependencies() {
+        String deps = props.get("cssdependencies");
+        if(deps==null)
+            return super.cssDependencies();
+        return deps.split(",");
+    }
+
+    @Override
     public String javascript() {
         String script = props.get("script");
         return script;

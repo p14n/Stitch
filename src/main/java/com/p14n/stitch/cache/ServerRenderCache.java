@@ -11,7 +11,7 @@ import com.p14n.stitch.content.ContentRepository;
 public class ServerRenderCache extends MemoryRenderCache {
     public ServerRenderCache(ContentRepository contentRepository){
         super((ContentRequestInfo info) -> {
-            Content c = contentRepository.getContent(info);
+            Content c = contentRepository.getContent(info.getPath());
             Page p = new Page(c);
             return p;
         });

@@ -15,7 +15,7 @@ public interface ContentRepository {
     public void updateContent(Content content);
     public void deleteContent(Content content);
     public List<Content> getContent();
-    public Content getContent(ContentRequestInfo info);
+    public Content getContent(String path);
 
     public void initialize(Map<String, String> settings);
 }

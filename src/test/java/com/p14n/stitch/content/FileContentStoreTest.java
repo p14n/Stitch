@@ -41,7 +41,7 @@ public class FileContentStoreTest {
         Content c = new Content(path,"text/html","utf8","<span>hi</span>".getBytes(),200);
 
         store.addContent(c);;
-        Content c2 = store.getContent(new ContentRequestInfo(null,path,null,null));
+        Content c2 = store.getContent(path);
         Assert.assertEquals(c,c2);
     }
 }

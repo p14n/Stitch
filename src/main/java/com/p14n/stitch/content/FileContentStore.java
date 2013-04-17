@@ -148,9 +148,9 @@ public class FileContentStore implements ContentRepository {
     }
 
     @Override
-    public synchronized Content getContent(ContentRequestInfo info) {
-        String id = pathIdMap.get(info.getPath());
-        return getContentById(id,info.getPath());
+    public synchronized Content getContent(String path) {
+        String id = pathIdMap.get(path);
+        return getContentById(id,path);
     }
     public synchronized Content getContentById(String id,String path) {
         if (id != null) {

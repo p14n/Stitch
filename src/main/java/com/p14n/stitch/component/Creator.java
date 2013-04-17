@@ -11,9 +11,13 @@ public abstract class Creator implements PropertyAcceptor {
     public String[] javascriptDependencies(){
         return new String[]{};
     }
+    public String[] cssDependencies(){
+        return new String[]{};
+    }
     public String javascript(){
         return null;
     }
+
     public String html(){
         return null;
     }
