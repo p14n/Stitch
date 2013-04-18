@@ -3,6 +3,7 @@ package com.p14n.stitch.component;
 import junit.framework.Assert;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
 import org.junit.Test;
 
 import java.util.Arrays;
@@ -46,5 +47,27 @@ public class ComponentFunctionsTest {
         Assert.assertEquals("" +
                 "<html><head><link rel=\"stylesheet\" type=\"text/css\" href=\"myfile.css\" />" +
                 "<script type=\"text/javascript\" src=\"myfile.js\"></script></head><body></body></html>", doc.outerHtml());
+    }
+    @Test
+    public void shouldReplaceDivWithComponent(){
+        Document doc = Jsoup.parse("<html><div id=\"a\"/></html>");
+        Element div = doc.getElementsByTag("div").first();
+        Component c = new Component();
+        c.setName("a");
+        c.setCreator(new Creator() {
+            @Override
+            public String html() {
+                return "<span>nothing ${prop1}</span>";
+            }
+
+            @Override
+            public void set(String key, String val) {}
+        });
+        Map<String,String> props = new HashMap<>();
+        props.put("prop1","at all");
+        ComponentFunctions.replace(div,c,props);
+        doc.outputSettings().prettyPrint(false);
+        Assert.assertEquals("<html><head></head><body><!--Component a--><span>nothing at all</span></body></html>",
+                doc.outerHtml());
     }
 }

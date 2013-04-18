@@ -11,7 +11,7 @@ import java.util.Set;
  * Created by Dean Pehrsson-Chapman
  * Date: 12/04/2013
  */
-public abstract class MemoryRenderCache extends ResponseCache<ContentRequestInfo,
+public class MemoryRenderCache extends ResponseCache<ContentRequestInfo,
         Page> implements RenderCache {
 
     public MemoryRenderCache(Function1<ContentRequestInfo, Page> function) {

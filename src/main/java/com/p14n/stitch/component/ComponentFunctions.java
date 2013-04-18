@@ -1,15 +1,18 @@
 package com.p14n.stitch.component;
 
+import com.p14n.stitch.Page;
 import com.p14n.stitch.StitchException;
+import com.p14n.stitch.content.Content;
 import com.p14n.stitch.settings.SettingsRepository;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import com.typesafe.config.ConfigValue;
 import org.jsoup.Jsoup;
+import org.jsoup.nodes.Comment;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
-import org.jsoup.nodes.TextNode;
 
+import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -66,9 +69,15 @@ public class ComponentFunctions {
         return c;
     }
 
-    public static String stitch(String content, Map<String, Component> componentMap, SettingsRepository settings) {
+    public static String stitch(String html, Map<String, Component> componentMap,
+                                 SettingsRepository settings) {
+        return stitch(Jsoup.parse(html),componentMap,settings,false,null);
+    }
 
-        Document doc = Jsoup.parse(content);
+    private static String stitch(Document doc, Map<String, Component> componentMap,
+                                 SettingsRepository settings, boolean serverRender, Map<String, Component> clientComponents) {
+
+        doc.outputSettings().prettyPrint(false);
         List<String> js = new ArrayList<>();
         List<String> css = new ArrayList<>();
 
@@ -76,36 +85,74 @@ public class ComponentFunctions {
             String componentId = e.attr("data-stitch");
             Component c = componentMap.get(componentId);
             if (c != null) {
-                Map<String, String> componentSettings = settings.getSettings(componentId);
-                css.addAll(Arrays.asList(c.getCreator().cssDependencies()));
-                js.addAll(Arrays.asList(c.getCreator().javascriptDependencies()));
-                replace(e, c, componentSettings);
+                boolean renderLater = serverRender && c.isRenderOnClientOnly();
+                if (!renderLater) {
+                    Map<String, String> componentSettings = settings.getSettings(componentId);
+                    css.addAll(Arrays.asList(c.getCreator().cssDependencies()));
+                    js.addAll(Arrays.asList(c.getCreator().javascriptDependencies()));
+                    replace(e, c, componentSettings);
+                } else {
+                    clientComponents.put(c.getName(), c);
+                }
             } else {
-                e.replaceWith(new TextNode("<!-- Component " + componentId + " not found -->",""));
+                e.replaceWith(new Comment("Component " + componentId + " not found", ""));
             }
         }
         addToHead(doc, js, css);
+
         return doc.outerHtml();
+
+
     }
 
+    public static Page stitch(Content content, Map<String, Component> componentMap, SettingsRepository settings) {
+
+        Document doc = contentToDocument(content);
+        Map<String, Component> clientComponents = new HashMap<>();
+
+        boolean serverRender = content.isRenderOnServer();
+
+        stitch(doc, componentMap, settings, serverRender, clientComponents);
+
+        if (clientComponents.isEmpty()) clientComponents = null;
+
+        if (serverRender) {
+            return Page.serverRenderPage(doc.outerHtml(), content.getEncoding(), clientComponents);
+        }
+        return Page.clientRenderPage(doc.outerHtml(), content.getEncoding());
+
+    }
+
+    private static Document contentToDocument(Content content) {
+        try {
+            return Jsoup.parse(new String(content.getContent(), content.getEncoding()));
+        } catch (UnsupportedEncodingException e) {
+            throw new StitchException("Could not decode content with path " + content.getPath(), e);
+        }
+    }
+
+
     public static void replace(Element e, Component c, Map<String, String> componentSettings) {
-        String componentId = c.getName();
+
         e.after(merge(c.getCreator().html(), componentSettings));
-        e.replaceWith(new TextNode("<!-- Component " + componentId + " -->",""));
+        String componentId = c.getName();
+        //e.remove();
+        e.replaceWith(new Comment("Component " + componentId, ""));
+
     }
 
     public static void addToHead(Document doc, List<String> js, List<String> css) {
         if (!(js.isEmpty() && css.isEmpty())) {
             Set<String> done = new HashSet<>();
             Element head = doc.head();
-            for(String c:css){
-                if(!done.contains(c)){
+            for (String c : css) {
+                if (!done.contains(c)) {
                     done.add(c);
-                    head.append("<link rel=\"stylesheet\" type=\"text/css\" href=\""+c+"\">");
+                    head.append("<link rel=\"stylesheet\" type=\"text/css\" href=\"" + c + "\">");
                 }
             }
-            for(String j:js){
-                if(!done.contains(j)){
+            for (String j : js) {
+                if (!done.contains(j)) {
                     done.add(j);
                     head.append("<script type=\"text/javascript\" src=\"" + j +
                             "\"></script>");

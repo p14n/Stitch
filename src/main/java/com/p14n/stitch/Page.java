@@ -2,8 +2,10 @@ package com.p14n.stitch;
 
 import com.p14n.stitch.component.Component;
 import com.p14n.stitch.content.Content;
+import org.jsoup.nodes.Document;
 
-import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Created by Dean Pehrsson-Chapman
@@ -11,33 +13,40 @@ import java.util.List;
  */
 public class Page {
 
-    Content content;
-    List<Component> components;
-    String rendered;
+    final String stitched,encoding;
+    final Map<String, Component> clientComponents;
+    final boolean serverRender;
 
-
-    public Page(Content content) {
-        this.content = content;
+    private Page(boolean serverRender,String stitched, String encoding, Map<String, Component> clientComponents) {
+        this.serverRender=serverRender;
+        this.stitched = stitched;
+        this.encoding = encoding;
+        this.clientComponents = clientComponents;
     }
 
-    public List<Component> getComponents() {
-        return components;
+    public String encoding() {
+        return encoding;
     }
-    public String render(){
-        return rendered;
+
+    public String stitched() {
+        return stitched;
     }
 
     public boolean hasClientRenderOnlyComponents() {
-        if(components==null)return false;
-        for(Component c:components){
-            if(c.isRenderOnClientOnly()){
-                return true;
-            }
-        }
-        return false;
+        return clientComponents!=null&&!clientComponents.isEmpty();
     }
 
-    public Content getContent() {
-        return content;
+    public Map<String, Component> getClientComponents() {
+        return clientComponents;
+    }
+    public static Page serverRenderPage(String stitched, String encoding, Map<String, Component> clientComponents){
+        return new Page(true,stitched,encoding,clientComponents);
+    }
+    public static Page clientRenderPage(String stitched, String encoding){
+        return new Page(false,stitched,encoding,null);
+    }
+
+    public boolean isServerRender() {
+        return serverRender;
     }
 }

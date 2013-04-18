@@ -20,41 +20,17 @@ public class ResponseCache<Request, Response> implements
     private ConcurrentHashMap<Request, Future<Response>> cache = new ConcurrentHashMap<>();
     private Function1<Request, Response> function;
 
-    public boolean isCached(Request r) {
-        return cache.containsKey(r);
-    }
-
     public ResponseCache(Function1<Request, Response> function) {
         super();
         this.function = function;
     }
 
-    public void remove(Request r) {
-        cache.remove(r);
-    }
-
-    public void clear() {
-        cache.clear();
-    }
-
-    public boolean isAbleToCacheRequest(Request request) {
-        return true;
-    }
-
-    public boolean isAbleToCacheResponse(Response response) {
-        return true;
-    }
-
     @Override
     public Response apply(final Request request) {
         while (true) {
-
             Future<Response> f = cache.get(request);
             try {
                 if (f == null) {
-
-                    if (!isAbleToCacheRequest(request))
-                        return function.apply(request);
 
                     Callable<Response> callable = new Callable<Response>() {
                         @Override
@@ -64,18 +40,16 @@ public class ResponseCache<Request, Response> implements
                     };
                     FutureTask<Response> ft = new FutureTask<>(callable);
                     ft.run();
-                    if (isAbleToCacheResponse(get(request, ft))) {
-                        f = cache.putIfAbsent(request, ft);
-                    }
+                    f = cache.putIfAbsent(request, ft);
                 }
-                return get(request, f);
+                return get(f);
             } catch (CancellationException e) {
                 cache.remove(request, f);
             }
         }
     }
 
-    private Response get(Request request, Future<Response> f) {
+    private Response get(Future<Response> f) {
         try {
             return f.get();
         } catch (CancellationException e) {
